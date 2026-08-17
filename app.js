@@ -12,6 +12,7 @@ function bindEvents(){
   els.filter.addEventListener('click',e=>{const b=e.target.closest('button[data-airline]');if(!b)return;state.filter=b.dataset.airline;els.filter.querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));renderInventory();});
   document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$('#'+b.dataset.close).close()));
   els.movementItem.addEventListener('change',syncMovementType);
+  els.movementAction.addEventListener('change',syncMovementType);
   els.newValueType.addEventListener('change',syncNewItemType);
   els.movementForm.addEventListener('submit',submitMovement);
   els.newItemForm.addEventListener('submit',submitNewItem);
@@ -68,7 +69,7 @@ function isLow(x){if(x.valueType==='NUMBER'){const n=Number(x.stockValue),m=Numb
 function isOut(x){if(x.valueType==='NUMBER')return Number(x.stockValue)<=0;return ['no','out','out of stock'].includes(String(x.stockValue).toLowerCase());}
 
 function populateMovementItems(){
-  els.movementItem.innerHTML=state.inventory.filter(x=>x.active!==false).map((x,i)=>`<option value="${i}">${escapeHtml(x.airline)} — ${escapeHtml(x.item)}</option>`).join('');
+  els.movementItem.innerHTML=state.inventory.filter(x=>x.active!==false).map(x=>{const i=state.inventory.indexOf(x);return `<option value="${i}">${escapeHtml(x.airline)} — ${escapeHtml(x.item)}</option>`;}).join('');
   syncMovementType();
 }
 
