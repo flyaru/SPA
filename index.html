@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b5d4b" />
+  <title>Stationery Stock</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Airport Operations</p>
+      <h1>Stationery Stock</h1>
+      <p class="subtitle">Simple stock control for 9P &amp; G9</p>
+    </div>
+    <button class="icon-btn" id="refreshBtn" type="button" aria-label="Refresh">↻</button>
+  </header>
+
+  <main class="shell">
+    <section class="stats" aria-label="Stock summary">
+      <article><span>Total items</span><strong id="statTotal">—</strong></article>
+      <article><span>Low stock</span><strong id="statLow">—</strong></article>
+      <article><span>9P</span><strong id="stat9P">—</strong></article>
+      <article><span>G9</span><strong id="statG9">—</strong></article>
+    </section>
+
+    <section class="toolbar">
+      <div class="segmented" id="airlineFilter">
+        <button class="active" data-airline="ALL" type="button">All</button>
+        <button data-airline="9P" type="button">9P</button>
+        <button data-airline="G9" type="button">G9</button>
+      </div>
+      <input id="searchInput" type="search" placeholder="Search stationery…" autocomplete="off" />
+    </section>
+
+    <section class="actions">
+      <button class="primary" id="movementBtn" type="button">Record stock movement</button>
+      <button class="secondary" id="newItemBtn" type="button">Add new item</button>
+    </section>
+
+    <div id="notice" class="notice hidden" role="status"></div>
+
+    <section class="inventory-panel">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Live inventory</p>
+          <h2>Current stock</h2>
+        </div>
+        <span id="lastLoaded" class="muted"></span>
+      </div>
+      <div id="inventoryList" class="inventory-list">
+        <div class="empty">Loading stock…</div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="movementDialog">
+    <form id="movementForm" class="form-card">
+      <div class="dialog-head">
+        <div><p class="eyebrow">Stock update</p><h2>Record movement</h2></div>
+        <button type="button" class="close-btn" data-close="movementDialog">×</button>
+      </div>
+      <label>Staff name<input name="staffName" id="staffName" required maxlength="80" /></label>
+      <label>Staff email<input name="staffEmail" id="staffEmail" type="email" required maxlength="120" /></label>
+      <label>Stationery item<select name="itemKey" id="movementItem" required></select></label>
+      <div id="numericFields">
+        <label>Action<select name="action" id="movementAction">
+          <option value="RECEIVE">Receive / add stock</option>
+          <option value="ISSUE">Issue / use stock</option>
+          <option value="SET">Set exact quantity</option>
+        </select></label>
+        <label>Quantity<input name="quantity" id="movementQuantity" type="number" min="0" step="1" inputmode="numeric" /></label>
+      </div>
+      <div id="statusFields" class="hidden">
+        <label>Availability<select name="statusValue" id="statusValue">
+          <option value="Yes">Available</option>
+          <option value="Low">Low</option>
+          <option value="No">Out of stock</option>
+        </select></label>
+      </div>
+      <label>Remarks<textarea name="remarks" rows="3" maxlength="300" placeholder="Optional"></textarea></label>
+      <button class="primary submit-btn" type="submit">Save update</button>
+    </form>
+  </dialog>
+
+  <dialog id="newItemDialog">
+    <form id="newItemForm" class="form-card">
+      <div class="dialog-head">
+        <div><p class="eyebrow">Master data</p><h2>Add stationery item</h2></div>
+        <button type="button" class="close-btn" data-close="newItemDialog">×</button>
+      </div>
+      <label>Staff name<input name="staffName" id="newStaffName" required maxlength="80" /></label>
+      <label>Staff email<input name="staffEmail" id="newStaffEmail" type="email" required maxlength="120" /></label>
+      <label>Airline<select name="airline" required><option value="9P">9P</option><option value="G9">G9</option></select></label>
+      <label>Item name<input name="item" required maxlength="120" /></label>
+      <label>Type<select name="valueType" id="newValueType"><option value="NUMBER">Quantity</option><option value="STATUS">Availability status</option></select></label>
+      <div id="newNumberFields">
+        <label>Opening quantity<input name="initialNumber" type="number" min="0" step="1" value="0" /></label>
+        <label>Low-stock level<input name="minLevel" type="number" min="0" step="1" value="5" /></label>
+      </div>
+      <div id="newStatusFields" class="hidden">
+        <label>Opening status<select name="initialStatus"><option value="Yes">Available</option><option value="Low">Low</option><option value="No">Out of stock</option></select></label>
+      </div>
+      <label>Remarks<textarea name="remarks" rows="3" maxlength="300" placeholder="Optional"></textarea></label>
+      <button class="primary submit-btn" type="submit">Add item</button>
+    </form>
+  </dialog>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
