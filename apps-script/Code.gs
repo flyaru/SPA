@@ -10,6 +10,7 @@ function setupApi() {
     token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
     props.setProperty('STOCK_API_TOKEN', token);
   }
+  Logger.log('STOCK_API_TOKEN: ' + token);
   return token;
 }
 
@@ -18,6 +19,10 @@ function doGet(e) {
     assertToken_(e && e.parameter ? e.parameter.token : '');
     const action = (e && e.parameter && e.parameter.action) || 'inventory';
     if (action === 'inventory') return json_({ ok: true, items: getInventory_() });
+    if (action === 'transactions') {
+      const limit = Math.min(Math.max(Number((e && e.parameter && e.parameter.limit) || 12), 1), 100);
+      return json_({ ok: true, items: getTransactions_(limit) });
+    }
     if (action === 'health') return json_({ ok: true, service: 'stationery-stock', time: new Date().toISOString() });
     throw new Error('Unknown action.');
   } catch (err) {
@@ -50,6 +55,27 @@ function getInventory_() {
     minLevel: r[5] === '' ? '' : Number(r[5]),
     lastUpdated: r[6] instanceof Date ? r[6].toISOString() : String(r[6] || ''),
     active: r[7] === '' ? true : Boolean(r[7])
+  }));
+}
+
+function getTransactions_(limit) {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TRANSACTIONS_SHEET);
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+  const count = Math.min(limit, lastRow - 1);
+  const startRow = lastRow - count + 1;
+  const values = sheet.getRange(startRow, 1, count, 10).getValues();
+  return values.reverse().map(r => ({
+    timestamp: r[0] instanceof Date ? r[0].toISOString() : String(r[0] || ''),
+    staffName: String(r[1] || '').trim(),
+    staffEmail: String(r[2] || '').trim(),
+    airline: String(r[3] || '').trim(),
+    item: String(r[4] || '').trim(),
+    action: String(r[5] || '').trim(),
+    previousValue: r[6] === '' ? '' : r[6],
+    changeValue: r[7] === '' ? '' : r[7],
+    resultingValue: r[8] === '' ? '' : r[8],
+    remarks: String(r[9] || '').trim()
   }));
 }
 
