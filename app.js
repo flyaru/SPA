@@ -1,4 +1,4 @@
-const state={inventory:[],activity:[],airline:'ALL',status:'ALL',search:'',sortKey:'airline',sortDir:'asc',staff:null,movementMode:'ISSUE'};
+const state={inventory:[],activity:[],airline:'ALL',status:'ALL',search:'',sortKey:'airline',sortDir:'asc',staff:null,movementMode:'ISSUE',baseMovementMode:'ISSUE'};
 const $=s=>document.querySelector(s);
 const els={
   body:$('#inventoryBody'),cards:$('#inventoryCards'),activity:$('#activityBody'),notice:$('#notice'),search:$('#searchInput'),airline:$('#airlineFilter'),status:$('#statusFilter'),sort:$('#sortSelect'),
@@ -156,6 +156,7 @@ function populateMovementItems(){
 function openMovement(mode='ISSUE',index){
   if(!requireStaff())return;
   state.movementMode=mode;
+  if(mode!=='STATUS')state.baseMovementMode=mode;
   if(Number.isInteger(index))els.movementItem.value=String(index);
   els.movementQuantity.value='1';els.movementForm.querySelector('textarea[name="remarks"]').value='';
   configureMovementMode();syncMovementItem();els.movementDialog.showModal();
@@ -178,11 +179,12 @@ function syncMovementItem(){
   els.numericFields.classList.toggle('hidden',statusItem);els.statusFields.classList.toggle('hidden',!statusItem);
   els.movementQuantity.required=!statusItem;
   if(statusItem){state.movementMode='STATUS';configureMovementMode();}
+  else if(state.movementMode==='STATUS'){state.movementMode=state.baseMovementMode||'ISSUE';configureMovementMode();}
 }
 
 function changeQty(delta){const current=Math.max(1,Number(els.movementQuantity.value)||1);els.movementQuantity.value=Math.max(1,current+delta);}
 
-function openNewItem(){if(!requireStaff())return;restoreStaff();els.newItemDialog.showModal();}
+function openNewItem(){if(!requireStaff())return;els.newItemDialog.showModal();}
 
 async function submitMovement(e){
   e.preventDefault();if(!requireStaff())return;
