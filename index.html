@@ -3,107 +3,222 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#0b5d4b" />
-  <title>Stationery Stock</title>
+  <meta name="theme-color" content="#173b35" />
+  <title>Stationery Control</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <p class="eyebrow">Airport Operations</p>
-      <h1>Stationery Stock</h1>
-      <p class="subtitle">Simple stock control for 9P &amp; G9</p>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-block">
+        <div class="brand-mark">SC</div>
+        <div>
+          <p class="overline">Airport Operations</p>
+          <h1>Stationery Control</h1>
+          <p class="header-subtitle">9P &amp; G9 inventory management</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="header-btn" id="refreshBtn" type="button" title="Refresh inventory">↻ <span>Refresh</span></button>
+        <button class="profile-btn" id="profileBtn" type="button">
+          <span class="avatar" id="profileAvatar">?</span>
+          <span class="profile-copy"><strong id="profileName">Set staff profile</strong><small id="profileEmail">Required for audit trail</small></span>
+        </button>
+      </div>
     </div>
-    <button class="icon-btn" id="refreshBtn" type="button" aria-label="Refresh">↻</button>
   </header>
 
-  <main class="shell">
-    <section class="stats" aria-label="Stock summary">
-      <article><span>Total items</span><strong id="statTotal">—</strong></article>
-      <article><span>Low stock</span><strong id="statLow">—</strong></article>
-      <article><span>9P</span><strong id="stat9P">—</strong></article>
-      <article><span>G9</span><strong id="statG9">—</strong></article>
-    </section>
-
-    <section class="toolbar">
-      <div class="segmented" id="airlineFilter">
-        <button class="active" data-airline="ALL" type="button">All</button>
-        <button data-airline="9P" type="button">9P</button>
-        <button data-airline="G9" type="button">G9</button>
+  <main class="app-shell">
+    <section class="summary-grid" aria-label="Inventory summary">
+      <button class="summary-card" type="button" data-summary-filter="ALL">
+        <span class="summary-icon neutral">▦</span>
+        <span><small>Total items</small><strong id="statTotal">—</strong></span>
+      </button>
+      <button class="summary-card" type="button" data-summary-filter="LOW">
+        <span class="summary-icon warning">!</span>
+        <span><small>Low stock</small><strong id="statLow">—</strong></span>
+      </button>
+      <button class="summary-card" type="button" data-summary-filter="OUT">
+        <span class="summary-icon danger">×</span>
+        <span><small>Out of stock</small><strong id="statOut">—</strong></span>
+      </button>
+      <div class="summary-card sync-card">
+        <span class="summary-icon success">✓</span>
+        <span><small>Last sync</small><strong id="lastLoaded">—</strong></span>
       </div>
-      <input id="searchInput" type="search" placeholder="Search stationery…" autocomplete="off" />
     </section>
 
-    <section class="actions">
-      <button class="primary" id="movementBtn" type="button">Record stock movement</button>
-      <button class="secondary" id="newItemBtn" type="button">Add new item</button>
+    <section class="quick-actions" aria-label="Quick stock actions">
+      <button class="action-card receive" id="receiveBtn" type="button">
+        <span class="action-symbol">＋</span>
+        <span><strong>Receive stock</strong><small>Add newly received stationery</small></span>
+      </button>
+      <button class="action-card issue" id="issueBtn" type="button">
+        <span class="action-symbol">−</span>
+        <span><strong>Issue stock</strong><small>Record stationery used or issued</small></span>
+      </button>
+      <button class="action-card add" id="newItemBtn" type="button">
+        <span class="action-symbol">＋</span>
+        <span><strong>Add item</strong><small>Create a new inventory line</small></span>
+      </button>
     </section>
 
     <div id="notice" class="notice hidden" role="status"></div>
 
-    <section class="inventory-panel">
-      <div class="section-heading">
+    <section class="panel inventory-panel">
+      <div class="panel-heading">
         <div>
-          <p class="eyebrow">Live inventory</p>
+          <p class="overline dark">Live inventory</p>
           <h2>Current stock</h2>
+          <p class="panel-description">Search, filter and sort the full stationery inventory.</p>
         </div>
-        <span id="lastLoaded" class="muted"></span>
+        <span class="record-count" id="recordCount">0 items</span>
       </div>
-      <div id="inventoryList" class="inventory-list">
-        <div class="empty">Loading stock…</div>
+
+      <div class="filters">
+        <div class="search-wrap">
+          <span>⌕</span>
+          <input id="searchInput" type="search" placeholder="Search item name…" autocomplete="off" />
+        </div>
+        <select id="airlineFilter" aria-label="Filter by airline">
+          <option value="ALL">All airlines</option>
+          <option value="9P">9P</option>
+          <option value="G9">G9</option>
+        </select>
+        <select id="statusFilter" aria-label="Filter by stock status">
+          <option value="ALL">All stock status</option>
+          <option value="LOW">Low stock</option>
+          <option value="OUT">Out of stock</option>
+          <option value="OK">Stock OK</option>
+        </select>
+        <select id="sortSelect" aria-label="Sort inventory">
+          <option value="airline:asc">Airline A–Z</option>
+          <option value="item:asc">Item A–Z</option>
+          <option value="item:desc">Item Z–A</option>
+          <option value="stock:asc">Stock: low to high</option>
+          <option value="stock:desc">Stock: high to low</option>
+          <option value="updated:desc">Recently updated</option>
+        </select>
+        <button class="clear-btn" id="clearFiltersBtn" type="button">Clear</button>
+      </div>
+
+      <div class="table-wrap desktop-inventory">
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th><button class="sort-head" data-sort="airline">Airline <span></span></button></th>
+              <th><button class="sort-head" data-sort="item">Item <span></span></button></th>
+              <th class="num"><button class="sort-head" data-sort="stock">Current stock <span></span></button></th>
+              <th class="num">Minimum</th>
+              <th>Status</th>
+              <th><button class="sort-head" data-sort="updated">Last updated <span></span></button></th>
+              <th class="actions-col">Action</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryBody">
+            <tr><td colspan="7" class="loading-cell">Loading inventory…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="inventoryCards" class="mobile-inventory"></div>
+    </section>
+
+    <section class="panel activity-panel">
+      <div class="panel-heading compact">
+        <div>
+          <p class="overline dark">Audit trail</p>
+          <h2>Recent activity</h2>
+        </div>
+        <button class="text-btn" id="activityRefreshBtn" type="button">Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table class="activity-table">
+          <thead><tr><th>Time</th><th>Staff</th><th>Airline</th><th>Item</th><th>Movement</th><th>Result</th></tr></thead>
+          <tbody id="activityBody"><tr><td colspan="6" class="loading-cell">Loading recent activity…</td></tr></tbody>
+        </table>
       </div>
     </section>
   </main>
 
-  <dialog id="movementDialog">
-    <form id="movementForm" class="form-card">
+  <dialog id="profileDialog">
+    <form id="profileForm" class="form-card">
       <div class="dialog-head">
-        <div><p class="eyebrow">Stock update</p><h2>Record movement</h2></div>
+        <div><p class="overline dark">Staff identification</p><h2>Your profile</h2><p>Saved on this device and attached automatically to every stock movement.</p></div>
+        <button type="button" class="close-btn" data-close="profileDialog">×</button>
+      </div>
+      <label>Full name<input name="staffName" id="profileStaffName" required maxlength="80" autocomplete="name" placeholder="e.g. Ahmed Ali" /></label>
+      <label>Email address<input name="staffEmail" id="profileStaffEmail" type="email" required maxlength="120" autocomplete="email" placeholder="name@company.com" /></label>
+      <button class="primary submit-btn" type="submit">Save profile</button>
+    </form>
+  </dialog>
+
+  <dialog id="movementDialog">
+    <form id="movementForm" class="form-card movement-card">
+      <div class="dialog-head">
+        <div><p class="overline dark" id="movementOverline">Stock movement</p><h2 id="movementTitle">Update stock</h2><p id="movementStaffLine"></p></div>
         <button type="button" class="close-btn" data-close="movementDialog">×</button>
       </div>
-      <label>Staff name<input name="staffName" id="staffName" required maxlength="80" /></label>
-      <label>Staff email<input name="staffEmail" id="staffEmail" type="email" required maxlength="120" /></label>
-      <label>Stationery item<select name="itemKey" id="movementItem" required></select></label>
+
+      <div class="selected-stock" id="selectedStockBox">
+        <span>Current stock</span><strong id="selectedStockValue">—</strong>
+      </div>
+
+      <label>Stationery item
+        <select name="itemKey" id="movementItem" required></select>
+      </label>
+
       <div id="numericFields">
-        <label>Action<select name="action" id="movementAction">
-          <option value="RECEIVE">Receive / add stock</option>
-          <option value="ISSUE">Issue / use stock</option>
-          <option value="SET">Set exact quantity</option>
-        </select></label>
-        <label>Quantity<input name="quantity" id="movementQuantity" type="number" min="0" step="1" inputmode="numeric" /></label>
+        <input type="hidden" name="action" id="movementAction" value="ISSUE" />
+        <label>Quantity
+          <div class="quantity-control">
+            <button type="button" class="qty-btn" data-qty="-1">−</button>
+            <input name="quantity" id="movementQuantity" type="number" min="1" step="1" value="1" inputmode="numeric" />
+            <button type="button" class="qty-btn" data-qty="1">＋</button>
+          </div>
+        </label>
+        <div class="quick-qty" aria-label="Quick quantities">
+          <button type="button" data-set-qty="1">1</button>
+          <button type="button" data-set-qty="5">5</button>
+          <button type="button" data-set-qty="10">10</button>
+          <button type="button" data-set-qty="20">20</button>
+        </div>
       </div>
+
       <div id="statusFields" class="hidden">
-        <label>Availability<select name="statusValue" id="statusValue">
-          <option value="Yes">Available</option>
-          <option value="Low">Low</option>
-          <option value="No">Out of stock</option>
-        </select></label>
+        <label>Availability
+          <select name="statusValue" id="statusValue">
+            <option value="Yes">Available</option>
+            <option value="Low">Low</option>
+            <option value="No">Out of stock</option>
+          </select>
+        </label>
       </div>
-      <label>Remarks<textarea name="remarks" rows="3" maxlength="300" placeholder="Optional"></textarea></label>
-      <button class="primary submit-btn" type="submit">Save update</button>
+
+      <label>Remarks <span class="optional">Optional</span><textarea name="remarks" rows="2" maxlength="300" placeholder="Reason, reference, recipient, etc."></textarea></label>
+      <button class="primary submit-btn movement-submit" id="movementSubmitBtn" type="submit">Save movement</button>
     </form>
   </dialog>
 
   <dialog id="newItemDialog">
     <form id="newItemForm" class="form-card">
       <div class="dialog-head">
-        <div><p class="eyebrow">Master data</p><h2>Add stationery item</h2></div>
+        <div><p class="overline dark">Inventory setup</p><h2>Add stationery item</h2><p>Create one new stock line.</p></div>
         <button type="button" class="close-btn" data-close="newItemDialog">×</button>
       </div>
-      <label>Staff name<input name="staffName" id="newStaffName" required maxlength="80" /></label>
-      <label>Staff email<input name="staffEmail" id="newStaffEmail" type="email" required maxlength="120" /></label>
-      <label>Airline<select name="airline" required><option value="9P">9P</option><option value="G9">G9</option></select></label>
-      <label>Item name<input name="item" required maxlength="120" /></label>
-      <label>Type<select name="valueType" id="newValueType"><option value="NUMBER">Quantity</option><option value="STATUS">Availability status</option></select></label>
-      <div id="newNumberFields">
+      <div class="form-grid two">
+        <label>Airline<select name="airline" required><option value="9P">9P</option><option value="G9">G9</option></select></label>
+        <label>Tracking type<select name="valueType" id="newValueType"><option value="NUMBER">Quantity</option><option value="STATUS">Availability status</option></select></label>
+      </div>
+      <label>Item name<input name="item" required maxlength="120" placeholder="e.g. Boarding Pass" /></label>
+      <div id="newNumberFields" class="form-grid two">
         <label>Opening quantity<input name="initialNumber" type="number" min="0" step="1" value="0" /></label>
-        <label>Low-stock level<input name="minLevel" type="number" min="0" step="1" value="5" /></label>
+        <label>Low-stock threshold<input name="minLevel" type="number" min="0" step="1" value="5" /></label>
       </div>
       <div id="newStatusFields" class="hidden">
         <label>Opening status<select name="initialStatus"><option value="Yes">Available</option><option value="Low">Low</option><option value="No">Out of stock</option></select></label>
       </div>
-      <label>Remarks<textarea name="remarks" rows="3" maxlength="300" placeholder="Optional"></textarea></label>
-      <button class="primary submit-btn" type="submit">Add item</button>
+      <label>Remarks <span class="optional">Optional</span><textarea name="remarks" rows="2" maxlength="300"></textarea></label>
+      <button class="primary submit-btn" type="submit">Add inventory item</button>
     </form>
   </dialog>
 
